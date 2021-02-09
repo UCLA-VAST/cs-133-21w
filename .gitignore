@@ -3,3 +3,5 @@
 *.out
 gemm
 !gemm-baseline*.a
+cnn
+vadd

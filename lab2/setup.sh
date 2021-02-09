@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 if [ "$(uname -s)" == 'Darwin' ]; then
   xcode-select --install
   [ -f /usr/local/bin/brew ] || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
