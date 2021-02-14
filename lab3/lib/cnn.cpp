@@ -128,9 +128,6 @@ void LoadData(const string& data_dir, float input[kNum][kInImSize][kInImSize],
 }
 
 float IsError(float a, float b) {
-  if (!isfinite(a) || !isfinite(b)) {
-    return true;
-  }
   return fabs((a - b) / (a + b)) > 1e-3f && fabs(a - b) > 0.05f;
 }
 
