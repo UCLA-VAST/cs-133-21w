@@ -2,12 +2,12 @@ SRCS = lib/cnn.h lib/cnn.cpp lib/opencl.cpp lib/main.cpp
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-    LDFLAGS += -framework OpenCL
-    export OPENCL_PLATFORM ?= Apple
+	LDFLAGS += -framework OpenCL
+	export OPENCL_PLATFORM ?= Apple
 	# MACOS FOR DEVELOPMENT ONLY!
 else
-    LDFLAGS += -lOpenCL
-    export OPENCL_PLATFORM ?= NVIDIA CUDA
+	LDFLAGS += -lOpenCL
+	export OPENCL_PLATFORM ?= NVIDIA CUDA
 endif
 
 REQUIRED_FILES = cnn.cl params.sh lab4-report.pdf
@@ -23,8 +23,8 @@ test-vadd: vadd lib/vadd.cl
 	OPENCL_SOURCE=lib/vadd.cl ./$<
 
 cnn: $(SRCS)
-    sudo nvidia-smi -i 0 -pm ENABLED
-    sudo nvidia-smi -i 0 -ac 2505,1177
+	sudo nvidia-smi -i 0 -pm ENABLED
+	sudo nvidia-smi -i 0 -ac 2505,1177
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.a %.o, $^) $(LDFLAGS)
 
 vadd: lib/opencl.cpp lib/vadd.cpp
