@@ -61,6 +61,8 @@ void CnnKernel_YourCode(
       }
     }
   }
+
+  fprintf(stderr, "\nDone!\n");
 }
 
 /* Magics :-)  Do not touch unless you understand what you are doing */
