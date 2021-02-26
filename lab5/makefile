@@ -1,4 +1,4 @@
-SRCS = lib/cnn.h lib/cnn.cpp lib/opencl.cpp lib/main.cpp
+SRCS = lib/cnn.h lib/cnn.cpp lib_private/opencl.cpp lib/main.cpp
 
 DSA := xilinx_aws-vu9p-f1-04261818_dynamic_5_0
 DEVICE := $(AWS_PLATFORM)
@@ -22,7 +22,7 @@ estimate:
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
 	grep -A 3 "Latency (absolute)" _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt
 
-cnn.$(TARGET).$(DSA).xo: ./cnn.cpp
+cnn.$(TARGET).$(DSA).xo: ./cnn-krnl.cpp
 	$(VP) $(CLFLAGS) -c -k CnnKernel -I'$(<D)' -o'$@' '$<'
 
 cnn.$(TARGET).$(DSA).xclbin: cnn.$(TARGET).$(DSA).xo
