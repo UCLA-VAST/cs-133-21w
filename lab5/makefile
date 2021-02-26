@@ -18,7 +18,7 @@ swsim: emconfig
 hwsim: emconfig
 	XCL_EMULATION_MODE=hw_emu $(MAKE) TARGET=hw_emu internal
 
-hw:
+estimate:
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
 
 cnn.$(TARGET).$(DSA).xo: ./cnn.cpp
@@ -33,7 +33,7 @@ emconfig.json:
 	emconfigutil --platform $(DEVICE) --od .
 
 internal: cnn $(OPENCL_SOURCE) cnn.$(TARGET).$(DSA).xclbin
-	./$<
+	OPENCL_WORKGROUP_GLOBAL='1' OPENCL_WORKGROUP_LOCAL='1' ./$<
 
 cnn: $(SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.a %.o, $^) $(LDFLAGS)

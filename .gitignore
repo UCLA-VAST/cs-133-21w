@@ -5,3 +5,13 @@ gemm
 !gemm-baseline*.a
 cnn
 vadd
+_x
+*.log
+*.xo
+*.xo.*
+*.xclbin
+*.xclbin.*
+*.json
+*.xml
+.Xil
+.run
