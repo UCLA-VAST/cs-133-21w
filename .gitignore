@@ -4,6 +4,7 @@
 gemm
 !gemm-baseline*.a
 cnn
+cnn_fast
 vadd
 _x
 *.log

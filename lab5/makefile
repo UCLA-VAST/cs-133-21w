@@ -1,4 +1,6 @@
-SRCS = lib_private/cnn.h lib_private/cnn.cpp lib_private/opencl.cpp lib_private/main.cpp
+SRCS = lib/fixed-point/cnn.h lib/fixed-point/cnn.cpp \
+	   lib/fixed-point/opencl.cpp lib/fixed-point/main.cpp
+FAST = lib/cnn.h lib/cnn.cpp lib/opencl.cpp lib/main.cpp
 
 DSA := xilinx_vcu1525_xdma_201830_1
 DEVICE := xilinx_vcu1525_xdma_201830_1
@@ -8,15 +10,17 @@ LDFLAGS += -lOpenCL
 
 export OPENCL_PLATFORM = Xilinx
 export OPENCL_DEVICE = $(DSA)
-export OPENCL_BINARY = cnn.$(TARGET).$(DSA).xclbin
 
-REQUIRED_FILES = cnn.cl params.sh lab4-report.pdf
+REQUIRED_FILES = cnn.cl params.sh lab5-report.pdf
+
+fastsim: emconfig
+	OPENCL_BINARY=cnn_fast.sw_emu.$(DSA).xclbin XCL_EMULATION_MODE=sw_emu $(MAKE) TARGET=sw_emu internal-fast
 
 swsim: emconfig
-	XCL_EMULATION_MODE=sw_emu $(MAKE) TARGET=sw_emu internal
+	OPENCL_BINARY=cnn.sw_emu.$(DSA).xclbin XCL_EMULATION_MODE=sw_emu $(MAKE) TARGET=sw_emu internal
 
 hwsim: emconfig
-	XCL_EMULATION_MODE=hw_emu $(MAKE) TARGET=hw_emu internal
+	OPENCL_BINARY=cnn.hw_emu.$(DSA).xclbin XCL_EMULATION_MODE=hw_emu $(MAKE) TARGET=hw_emu internal
 
 estimate:
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
@@ -28,6 +32,12 @@ cnn.$(TARGET).$(DSA).xo: ./cnn-krnl.cpp
 cnn.$(TARGET).$(DSA).xclbin: cnn.$(TARGET).$(DSA).xo
 	$(VP) $(CLFLAGS) -l $(LDCLFLAGS) --nk CnnKernel:1 -o'$@' $(+)
 
+cnn_fast.$(TARGET).$(DSA).xo: ./cnn-krnl.cpp
+	$(VP) $(CLFLAGS) -c -k CnnKernel -I'$(<D)' -DFASTSIM -o'$@' '$<'
+
+cnn_fast.$(TARGET).$(DSA).xclbin: cnn_fast.$(TARGET).$(DSA).xo
+	$(VP) $(CLFLAGS) -l $(LDCLFLAGS) --nk CnnKernel:1 -o'$@' $(+)
+
 emconfig: emconfig.json
 
 emconfig.json:
@@ -36,11 +46,19 @@ emconfig.json:
 internal: cnn $(OPENCL_SOURCE) cnn.$(TARGET).$(DSA).xclbin
 	OPENCL_WORKGROUP_GLOBAL='1' OPENCL_WORKGROUP_LOCAL='1' ./$<
 
+internal-fast: cnn_fast $(OPENCL_SOURCE) cnn_fast.$(TARGET).$(DSA).xclbin
+	OPENCL_WORKGROUP_GLOBAL='1' OPENCL_WORKGROUP_LOCAL='1' ./$<
+
 cnn: $(SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.a %.o, $^) $(LDFLAGS)
 
+cnn_fast: $(FAST)
+	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.a %.o, $^) $(LDFLAGS)
+
 clean:
-	$(RM) cnn cnn.*.xo
+	$(RM) cnn cnn.*.xo cnn.*.xclbin cnn.*.xo.* cnn.*.xclbin.* *.log v++* *.json *.xml
+	$(RM) cnn_fast cnn_fast.*.xo cnn_fast.*.xclbin cnn_fast.*.xo.* cnn_fast.*.xclbin.*
+	$(RM) -r _x
 
 #CXX = # specify your compiler here
 LDFLAGS += # specify your library linking options here
