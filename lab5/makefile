@@ -1,8 +1,8 @@
-SRCS = lib/cnn.h lib/cnn.cpp lib_private/opencl.cpp lib/main.cpp
+SRCS = lib_private/cnn.h lib_private/cnn.cpp lib_private/opencl.cpp lib_private/main.cpp
 
-DSA := xilinx_aws-vu9p-f1-04261818_dynamic_5_0
-DEVICE := $(AWS_PLATFORM)
-VP := $(XILINX_VITIS)/bin/v++
+DSA := xilinx_vcu1525_xdma_201830_1
+DEVICE := xilinx_vcu1525_xdma_201830_1
+VP := xocc
 CLFLAGS = -t $(TARGET) --platform $(DEVICE) --save-temps
 LDFLAGS += -lOpenCL
 

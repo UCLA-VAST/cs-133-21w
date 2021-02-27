@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <ap_fixed.h>
 
 const int kNum = 256;
 const int kKernel = 5;
@@ -17,10 +18,10 @@ inline float max(float a, float b) { return a > b ? a : b; }
     (output[(x)*kOutImSize*kOutImSize+(y)*kOutImSize+z])
 
 void CnnKernel_YourCode(
-    const float *input, const float *weight,
-    const float *bias, float *output) {
+    const ap_fixed<8,8> *input, const ap_fixed<8,2> *weight,
+    const ap_fixed<8,2> *bias,  ap_fixed<8,15> *output) {
 
-  static float C[kImSize][kImSize];
+  ap_fixed<19,15> C[kImSize][kImSize];
 
   for (int i = 0; i < kNum; ++i) {
     // You can use printf in software simulation for debugging
@@ -67,8 +68,8 @@ void CnnKernel_YourCode(
 
 /* Magics :-)  Do not touch unless you understand what you are doing */
 extern "C" void CnnKernel(
-    const float *input, const float *weight,
-    const float *bias, float *output) {
+    const ap_fixed<8,8> *input, const ap_fixed<8,2> *weight,
+    const ap_fixed<8,2> *bias,  ap_fixed<8,15> *output) {
 #pragma HLS interface m_axi port=input offset=slave bundle=gmem
 #pragma HLS interface m_axi port=weight offset=slave bundle=gmem
 #pragma HLS interface m_axi port=bias offset=slave bundle=gmem

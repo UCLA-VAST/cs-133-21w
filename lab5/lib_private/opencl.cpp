@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "../lib/cnn.h"
+#include "cnn.h"
 
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
@@ -200,9 +200,9 @@ void OpenclSetup(const string& kernel_name, cl::Context* context,
 }
 
 void CnnKernel(
-    const float input[kNum][kInImSize][kInImSize],
-    const float weight[kNum][kNum][kKernel][kKernel],
-    const float bias[kNum], float output[kNum][kOutImSize][kOutImSize]) {
+    const char input[kNum][kInImSize][kInImSize],
+    const char weight[kNum][kNum][kKernel][kKernel],
+    const char bias[kNum], char output[kNum][kOutImSize][kOutImSize]) {
   cl::Context context;
   cl::CommandQueue cmd;
   cl::Kernel kernel;
@@ -250,15 +250,15 @@ void CnnKernel(
   vector<cl::Memory> cl_buf_out;
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*input) * kNum,
-      const_cast<float*>(reinterpret_cast<const float*>(input)), &err));
+      const_cast<char*>(reinterpret_cast<const char*>(input)), &err));
   CL_CHECK(err);
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*weight) * kNum,
-      const_cast<float*>(reinterpret_cast<const float*>(weight)), &err));
+      const_cast<char*>(reinterpret_cast<const char*>(weight)), &err));
   CL_CHECK(err);
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*bias) * kNum,
-      const_cast<float*>(reinterpret_cast<const float*>(bias)), &err));
+      const_cast<char*>(reinterpret_cast<const char*>(bias)), &err));
   CL_CHECK(err);
   cl_buf_out.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
@@ -286,48 +286,3 @@ void CnnKernel(
   CL_CHECK(cmd.flush());
   CL_CHECK(cmd.finish());
 }
-
-void VaddKernel(const float* a, const float* b, float* c, uint64_t n) {
-  cl::Context context;
-  cl::CommandQueue cmd;
-  cl::Kernel kernel;
-  cl_int err;
-  OpenclSetup("VaddKernel", &context, &cmd, &kernel);
-
-  // Map userspace memory to kernelspace.
-  vector<cl::Memory> cl_buf_in;
-  vector<cl::Memory> cl_buf_out;
-  cl_buf_in.push_back(cl::Buffer(
-      context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*a) * n,
-      const_cast<float*>(a), &err));
-  CL_CHECK(err);
-  cl_buf_in.push_back(cl::Buffer(
-      context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*b) * n,
-      const_cast<float*>(b), &err));
-  CL_CHECK(err);
-  cl_buf_out.push_back(cl::Buffer(
-      context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
-      sizeof(*c) * n, c, &err));
-  CL_CHECK(err);
-
-  // Set up kernel arguments.
-  int arg = 0;
-  for (const auto& buf : cl_buf_in) {
-    CL_CHECK(kernel.setArg(arg++, buf));
-  }
-  for (const auto& buf : cl_buf_out) {
-    CL_CHECK(kernel.setArg(arg++, buf));
-  }
-
-  // Execute kernel.
-  vector<cl::Event> compute_event(1);
-  vector<cl::Event> write_event(1);
-  CL_CHECK(cmd.enqueueMigrateMemObjects(
-      cl_buf_in, /* flags = */ 0, nullptr, write_event.data()));
-  CL_CHECK(cmd.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(n),
-           cl::NullRange, &write_event, compute_event.data()));
-  CL_CHECK(cmd.enqueueMigrateMemObjects(
-      cl_buf_out, CL_MIGRATE_MEM_OBJECT_HOST, &compute_event, nullptr));
-  CL_CHECK(cmd.flush());
-  CL_CHECK(cmd.finish());
-};
