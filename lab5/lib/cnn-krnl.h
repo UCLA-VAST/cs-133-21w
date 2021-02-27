@@ -17,13 +17,13 @@ template <class T>
 inline T max(T a, T b) { return a > b ? a : b; }
 
 #define Input(x,y,z)    \
-    (input[(x)*kInImSize*kInImSize+(y)*kInImSize+(z)])
+    (input_g[(x)*kInImSize*kInImSize+(y)*kInImSize+(z)])
 #define Weight(x,y,z,i) \
-    (weight[(x)*kNum*kKernel*kKernel+(y)*kKernel*kKernel+(z)*kKernel+(i)])
+    (weight_g[(x)*kNum*kKernel*kKernel+(y)*kKernel*kKernel+(z)*kKernel+(i)])
 #define Bias(x)         \
-    (bias[(x)])
+    (bias_g[(x)])
 #define Output(x,y,z)   \
-    (output[(x)*kOutImSize*kOutImSize+(y)*kOutImSize+z])
+    (output_g[(x)*kOutImSize*kOutImSize+(y)*kOutImSize+z])
 
 #ifdef FASTSIM
 typedef float input_t;
