@@ -14,6 +14,8 @@ REQUIRED_FILES = cnn.cl params.sh lab4-report.pdf
 export OPENCL_SOURCE ?= cnn.cl
 
 test: cnn $(OPENCL_SOURCE)
+	sudo nvidia-smi -i 0 -pm ENABLED
+	sudo nvidia-smi -i 0 -ac 2505,1177
 	. ./params.sh; ./$<
 
 test-seq:
@@ -23,8 +25,6 @@ test-vadd: vadd lib/vadd.cl
 	OPENCL_SOURCE=lib/vadd.cl ./$<
 
 cnn: $(SRCS)
-	sudo nvidia-smi -i 0 -pm ENABLED
-	sudo nvidia-smi -i 0 -ac 2505,1177
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.a %.o, $^) $(LDFLAGS)
 
 vadd: lib/opencl.cpp lib/vadd.cpp
