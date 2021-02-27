@@ -18,8 +18,8 @@ using std::isfinite;
 using std::max;
 using std::string;
 
-void LoadData(const string& data_dir, char input[kNum][kInImSize][kInImSize],
-              char weight[kNum][kNum][kKernel][kKernel], char bias[kNum]) {
+void LoadData(const string& data_dir, uint8_t input[kNum][kInImSize][kInImSize],
+              int8_t weight[kNum][kNum][kKernel][kKernel], uint8_t bias[kNum]) {
   const char kInputFile[] = "lib/testdata/input.bin";
   const char kWeightFile[] = "lib/testdata/weight.bin";
   const char kBiasFile[] = "lib/testdata/bias.bin";
@@ -67,24 +67,24 @@ void LoadData(const string& data_dir, char input[kNum][kInImSize][kInImSize],
     exit(EXIT_FAILURE);
   }
 
-  // normalized to 0 ~ 63
+  // normalized to 0 ~ 255
   for (int i = 0; i < kNum; i++)
     for (int h = 0; h < kInImSize; h++)
       for (int w = 0; w < kInImSize; w++) {
-        input[i][h][w] = input_in[i][h][w] / 4;
+        input[i][h][w] = input_in[i][h][w];
       }
 
-  // normalized to -63 ~ 63
+  // normalized to -127 ~ 127
   for (int i = 0; i < kNum; i++)
     for (int j = 0; j < kNum; j++)
       for (int p = 0; p < kKernel; p++)
         for (int q = 0; q < kKernel; q++) {
-          weight[i][j][p][q] = weight_in[i][j][p][q] * 64;
+          weight[i][j][p][q] = weight_in[i][j][p][q] * 128;
         }
 
-  // normalized to 0 ~ 63
+  // normalized to 0 ~ 255
   for (int i = 0; i < kNum; i++) {
-    bias[i] = bias_in[i] * 64;
+    bias[i] = bias_in[i] * 256;
   }
 
   munmap(input_in, sizeof(*input) * kNum);
@@ -95,12 +95,13 @@ void LoadData(const string& data_dir, char input[kNum][kInImSize][kInImSize],
   close(bias_fd);
 }
 
-bool IsError(char a, float b) {
-  return fabs(a - b) > 4;
+bool IsError(uint8_t a, float b) {
+  return fabs(a - b) > (0.1f * (256.f + 256.f) / 2.f);
+  // allow a relative error of 10%
 }
 
 int Verify(const string& data_dir,
-           const char output[kNum][kOutImSize][kOutImSize]) {
+           const uint8_t output[kNum][kOutImSize][kOutImSize]) {
   int error = 0;
   const char kOutputFile[] = "lib/testdata/output.bin";
   int fd = open((data_dir + kOutputFile).c_str(), O_RDONLY);
@@ -118,15 +119,15 @@ int Verify(const string& data_dir,
   }
   bool first = true;
   int min = 0, max = 0;
-  for (int i = 0; i < kNum; ++i) {
+  for (int i = 219; i < 220; ++i) {
     for (int h = 0; h < kOutImSize; ++h) {
       for (int w = 0; w < kOutImSize; ++w) {
-        if (IsError(output[i][h][w], ground_truth[i][h][w] / 512)) {
-          if (ground_truth[i][h][w] / 512 < min) min = ground_truth[i][h][w] / 512;
-          if (ground_truth[i][h][w] / 512 > max) max = ground_truth[i][h][w] / 512;
+        if (IsError(output[i][h][w], ground_truth[i][h][w] / 128)) {
+          if (ground_truth[i][h][w] / 128 < min) min = ground_truth[i][h][w] / 128;
+          if (ground_truth[i][h][w] / 128 > max) max = ground_truth[i][h][w] / 128;
           if (first) {
             clog << "First error: get " << float(output[i][h][w]) << ", expecting "
-                 << ground_truth[i][h][w] / 512 << " @ i = " << i << ", h = " << h
+                 << ground_truth[i][h][w] / 128 << " @ i = " << i << ", h = " << h
                  << ", w = " << w << endl;
             //first = false;
           }

@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <cstdint>
 
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120
@@ -94,12 +95,12 @@ inline void ClCheck(cl_int err, const char* file, int line) {
 
 // Utility function declarations.
 void LoadData(const std::string& data_dir,
-              char input[kNum][kInImSize][kInImSize],
-              char weight[kNum][kNum][kKernel][kKernel], char bias[kNum]);
+              uint8_t input[kNum][kInImSize][kInImSize],
+              int8_t weight[kNum][kNum][kKernel][kKernel], uint8_t bias[kNum]);
 int Verify(const std::string& data_dir,
-           const char output[kNum][kOutImSize][kOutImSize]);
+           const uint8_t output[kNum][kOutImSize][kOutImSize]);
 void CnnKernel(
-    const char input[kNum][kInImSize][kInImSize],
-    const char weight[kNum][kNum][kKernel][kKernel],
-    const char bias[kNum], char output[kNum][kOutImSize][kOutImSize]);
+    const uint8_t input[kNum][kInImSize][kInImSize],
+    const int8_t weight[kNum][kNum][kKernel][kKernel],
+    const uint8_t bias[kNum], uint8_t output[kNum][kOutImSize][kOutImSize]);
 #endif

@@ -13,10 +13,10 @@ using std::string;
 
 int main(int argc, char** argv) {
   // Allocate memory on heap to avoid stack overflow.
-  static char input[kNum][kInImSize][kInImSize];
-  static char weight[kNum][kNum][kKernel][kKernel];
-  static char bias[kNum];
-  static char output[kNum][kOutImSize][kOutImSize];
+  static uint8_t input[kNum][kInImSize][kInImSize];
+  static int8_t  weight[kNum][kNum][kKernel][kKernel];
+  static uint8_t bias[kNum];
+  static uint8_t output[kNum][kOutImSize][kOutImSize];
 
   if (argc > 2) {
     clog << "Usage: " << argv[0] << " [data dir]\n";

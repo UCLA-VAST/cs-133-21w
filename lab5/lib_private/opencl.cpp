@@ -200,9 +200,9 @@ void OpenclSetup(const string& kernel_name, cl::Context* context,
 }
 
 void CnnKernel(
-    const char input[kNum][kInImSize][kInImSize],
-    const char weight[kNum][kNum][kKernel][kKernel],
-    const char bias[kNum], char output[kNum][kOutImSize][kOutImSize]) {
+    const uint8_t input[kNum][kInImSize][kInImSize],
+    const int8_t weight[kNum][kNum][kKernel][kKernel],
+    const uint8_t bias[kNum], uint8_t output[kNum][kOutImSize][kOutImSize]) {
   cl::Context context;
   cl::CommandQueue cmd;
   cl::Kernel kernel;
@@ -250,15 +250,15 @@ void CnnKernel(
   vector<cl::Memory> cl_buf_out;
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*input) * kNum,
-      const_cast<char*>(reinterpret_cast<const char*>(input)), &err));
+      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(input)), &err));
   CL_CHECK(err);
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*weight) * kNum,
-      const_cast<char*>(reinterpret_cast<const char*>(weight)), &err));
+      const_cast<int8_t*>(reinterpret_cast<const int8_t*>(weight)), &err));
   CL_CHECK(err);
   cl_buf_in.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(*bias) * kNum,
-      const_cast<char*>(reinterpret_cast<const char*>(bias)), &err));
+      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(bias)), &err));
   CL_CHECK(err);
   cl_buf_out.push_back(cl::Buffer(
       context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,

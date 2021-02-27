@@ -18,12 +18,12 @@ inline float max(float a, float b) { return a > b ? a : b; }
     (output[(x)*kOutImSize*kOutImSize+(y)*kOutImSize+z])
 
 void CnnKernel_YourCode(
-    const ap_fixed<8,8> *input, const ap_fixed<8,2> *weight,
-    const ap_fixed<8,2> *bias,  ap_fixed<8,15> *output) {
+    const ap_ufixed<8,8> *input, const ap_fixed <8, 1> *weight,
+    const ap_ufixed<8,0> *bias,        ap_ufixed<8,15> *output) {
 
-  ap_fixed<19,15> C[kImSize][kImSize];
+  ap_fixed<17,16> C[kImSize][kImSize];
 
-  for (int i = 0; i < kNum; ++i) {
+  for (int i = 219; i < 220; ++i) {
     // You can use printf in software simulation for debugging
     fprintf(stderr, "Finished %d%% channel(s) #%d/#%d\r", 100*i/kNum, i, kNum);
 
@@ -68,8 +68,8 @@ void CnnKernel_YourCode(
 
 /* Magics :-)  Do not touch unless you understand what you are doing */
 extern "C" void CnnKernel(
-    const ap_fixed<8,8> *input, const ap_fixed<8,2> *weight,
-    const ap_fixed<8,2> *bias,  ap_fixed<8,15> *output) {
+    const ap_ufixed<8,8> *input, const ap_fixed <8, 1> *weight,
+    const ap_ufixed<8,0> *bias,        ap_ufixed<8,15> *output) {
 #pragma HLS interface m_axi port=input offset=slave bundle=gmem
 #pragma HLS interface m_axi port=weight offset=slave bundle=gmem
 #pragma HLS interface m_axi port=bias offset=slave bundle=gmem
