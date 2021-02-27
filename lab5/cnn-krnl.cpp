@@ -1,31 +1,19 @@
 #include "lib/cnn-krnl.h"
 
-#define H_TILE_SIZE     (112)
-#define W_TILE_SIZE     (112)
-#define H_TILE_COUNT    (2)
-#define W_TILE_COUNT    (2)
-
 void CnnKernel_YourCode(
-    const input_t *input_g, const weight_t *weight_g,
-    const bias_t  *bias_g,        output_t *output_g) {
+    const input_g_t *input_g, const weight_g_t *weight_g,
+    const bias_g_t  *bias_g,        output_g_t *output_g) {
 
   static input_t   input [kNum][H_TILE_SIZE+4][W_TILE_SIZE+4];
   static weight_t  weight[kNum][kNum][kKernel][kKernel];
   static bias_t    bias  [kNum];
   static output_t  output[kNum][H_TILE_SIZE/2][W_TILE_SIZE/2];
 
-  compute_t C[H_TILE_SIZE][W_TILE_SIZE];
+  static compute_t C[H_TILE_SIZE][W_TILE_SIZE];
 
-  read_weight:
-  for (int i = 0; i < kNum; i++)
-    for (int j = 0; j < kNum; j++)
-      for (int k = 0; k < kKernel; k++)
-        for (int l = 0; l < kKernel; l++)
-          weight[i][j][k][l] = Weight(i, j, k, l);
-
-  read_bias:
-  for (int i = 0; i < kNum; i++)
-    bias[i] = Bias(i);
+  // read the whole arrays from memory to device
+  read_weight_from_memory(weight_g, weight);
+  read_bias_from_memory  (bias_g,   bias);
 
   main_loop_tile_h:
   for (int hh = 0; hh < kImSize; hh += H_TILE_SIZE) {
@@ -33,11 +21,8 @@ void CnnKernel_YourCode(
     main_loop_tile_w:
     for (int ww = 0; ww < kImSize; ww += W_TILE_SIZE) {
 
-      read_input:
-      for (int j = 0; j < kNum; ++j)
-        for (int h = 0; h < H_TILE_SIZE + 4; h++)
-          for (int w = 0; w < W_TILE_SIZE + 4; w++)
-            input[j][h][w] = Input(j, hh + h, ww + w);
+      // read input[j][h][w] = Input(j, hh + h, ww + w);
+      read_input_from_memory(hh, ww, input_g, input);
 
       main_loop_i:
       for (int i = 0; i < kNum; ++i) {
@@ -86,14 +71,11 @@ void CnnKernel_YourCode(
         }
       }
 
-      write_output:
-      for (int i = 0; i < kNum; i++)
-        for (int h = 0; h < H_TILE_SIZE/2; h++)
-          for (int w = 0; w < W_TILE_SIZE/2; w++)
-            Output(i, hh/2 + h, ww/2 + w) = output[i][h][w];
+      // write Output(i, hh/2 + h, ww/2 + w) = output[i][h][w];
+      write_output_to_memory(hh, ww, output_g, output);
 
       fprintf(stderr, "\Computation for tile (%d, %d) is completed.\n",
-              hh, ww);
+              hh, ww) ;
     }
   }
 
