@@ -4,14 +4,17 @@ void CnnKernel_YourCode(
     const input_g_t *input_g, const weight_g_t *weight_g,
     const bias_g_t  *bias_g,        output_g_t *output_g) {
 
-  static input_t   input [kNum][H_TILE_SIZE+4][W_TILE_SIZE+4];
+  static input_t   input [kNum][H_TILE_SIZE+kKernel-1][W_TILE_SIZE+kKernel-1];
   static weight_t  weight[kNum][kNum][kKernel][kKernel];
   static bias_t    bias  [kNum];
   static output_t  output[kNum][H_TILE_SIZE/2][W_TILE_SIZE/2];
 
   static compute_t C[H_TILE_SIZE][W_TILE_SIZE];
 
-  // read the whole arrays from memory to device
+  // TODO:  You may want to add array partitioning here, e.g.:
+  // #pragma HLS array_partition variable=input dim=3 factor=5 cyclic
+
+  // Read the whole arrays from memory to device
   read_weight_from_memory(weight_g, weight);
   read_bias_from_memory  (bias_g,   bias);
 
@@ -21,17 +24,18 @@ void CnnKernel_YourCode(
     main_loop_tile_w:
     for (int ww = 0; ww < kImSize; ww += W_TILE_SIZE) {
 
-      // read input[j][h][w] = Input(j, hh + h, ww + w);
+      // Read input[j][h][w] = Input(j, hh + h, ww + w);
       read_input_from_memory(hh, ww, input_g, input);
 
       main_loop_i:
       for (int i = 0; i < kNum; ++i) {
+        // TODO:  Please modify the code inside this loop :-)
 
         // You can use printf in software simulation for debugging
         fprintf(stderr, "Finished %d%% channel(s) #%d/#%d\r",
                 100*i/kNum, i, kNum);
 
-        // Set Bias
+        // Set bias
         set_bias:
         for (int h = 0; h < H_TILE_SIZE; ++h) {
           for (int w = 0; w < W_TILE_SIZE; ++w)
@@ -71,10 +75,10 @@ void CnnKernel_YourCode(
         }
       }
 
-      // write Output(i, hh/2 + h, ww/2 + w) = output[i][h][w];
+      // Write Output(i, hh/2 + h, ww/2 + w) = output[i][h][w];
       write_output_to_memory(hh, ww, output_g, output);
 
-      fprintf(stderr, "\Computation for tile (%d, %d) is completed.\n",
+      fprintf(stderr, "Computation for tile (%d, %d) is completed.\n",
               hh, ww) ;
     }
   }
