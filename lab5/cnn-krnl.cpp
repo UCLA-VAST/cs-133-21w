@@ -1,15 +1,21 @@
+// If you want to modify the tiling size, uncomment:
+// #define kTileH   (28)
+// #define kTileW   (56)
+
+// Tiling specification must be before the #include
+// and 224 must be a multiple of the tiling size
 #include "lib/cnn-krnl.h"
 
 void CnnKernel_YourCode(
     const input_g_t *input_g, const weight_g_t *weight_g,
     const bias_g_t  *bias_g,        output_g_t *output_g) {
 
-  static input_t   input [kNum][H_TILE_SIZE+kKernel-1][W_TILE_SIZE+kKernel-1];
+  static input_t   input [kNum][kTileH+kKernel-1][kTileW+kKernel-1];
   static weight_t  weight[kNum][kNum][kKernel][kKernel];
   static bias_t    bias  [kNum];
-  static output_t  output[kNum][H_TILE_SIZE/2][W_TILE_SIZE/2];
+  static output_t  output[kNum][kTileH/2][kTileW/2];
 
-  static compute_t C[H_TILE_SIZE][W_TILE_SIZE];
+  static compute_t C[kTileH][kTileW];
 
   // TODO:  You may want to add array partitioning here, e.g.:
   // #pragma HLS array_partition variable=input dim=3 factor=5 cyclic
@@ -19,10 +25,10 @@ void CnnKernel_YourCode(
   read_bias_from_memory  (bias_g,   bias);
 
   main_loop_tile_h:
-  for (int hh = 0; hh < kImSize; hh += H_TILE_SIZE) {
+  for (int hh = 0; hh < kImSize; hh += kTileH) {
 
     main_loop_tile_w:
-    for (int ww = 0; ww < kImSize; ww += W_TILE_SIZE) {
+    for (int ww = 0; ww < kImSize; ww += kTileW) {
 
       // Read input[j][h][w] = Input(j, hh + h, ww + w);
       read_input_from_memory(hh, ww, input_g, input);
@@ -37,16 +43,16 @@ void CnnKernel_YourCode(
 
         // Set bias
         set_bias:
-        for (int h = 0; h < H_TILE_SIZE; ++h) {
-          for (int w = 0; w < W_TILE_SIZE; ++w)
+        for (int h = 0; h < kTileH; ++h) {
+          for (int w = 0; w < kTileW; ++w)
             C[h][w] = bias[i];
         }
 
         // Convolution
         conv:
         for (int j = 0; j < kNum; ++j) {
-          for (int h = 0; h < H_TILE_SIZE; ++h) {
-            for (int w = 0; w < W_TILE_SIZE; ++w) {
+          for (int h = 0; h < kTileH; ++h) {
+            for (int w = 0; w < kTileW; ++w) {
               for (int p = 0; p < kKernel; ++p) {
                 for (int q = 0; q < kKernel; ++q)
                   C[h][w] += weight[i][j][p][q] *
@@ -58,16 +64,16 @@ void CnnKernel_YourCode(
 
         // ReLU
         relu:
-        for (int h = 0; h < H_TILE_SIZE; ++h) {
-          for (int w = 0; w < W_TILE_SIZE; ++w) {
+        for (int h = 0; h < kTileH; ++h) {
+          for (int w = 0; w < kTileW; ++w) {
             if (C[h][w] < 0) C[h][w] = 0;
           }
         }
 
         // Max pooling
         maxpool:
-        for (int h = 0; h < H_TILE_SIZE/2; ++h) {
-          for (int w = 0; w < W_TILE_SIZE/2; ++w) {
+        for (int h = 0; h < kTileH/2; ++h) {
+          for (int w = 0; w < kTileW/2; ++w) {
             output[i][h][w] = max(
                 max(C[h * 2][w * 2    ], C[h * 2 + 1][w * 2    ]),
                 max(C[h * 2][w * 2 + 1], C[h * 2 + 1][w * 2 + 1]));

@@ -24,7 +24,7 @@ hwsim: emconfig
 
 estimate:
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
-	grep -A 3 "Latency (absolute)" _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt
+	grep -m 1 -A 3 "Latency (absolute)" _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt
 
 cnn.$(TARGET).$(DSA).xo: ./cnn-krnl.cpp
 	$(VP) $(CLFLAGS) -c -k CnnKernel -I'$(<D)' -o'$@' '$<'

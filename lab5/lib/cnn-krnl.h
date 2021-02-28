@@ -1,6 +1,7 @@
 #ifndef CNN_KRNL_H_
 #define CNN_KRNL_H_
 
+// Used for faster software simulation
 #pragma GCC target ("arch=skylake")
 #pragma GCC optimize ("-O3,-ffast-math")
 
@@ -8,19 +9,27 @@
 #include <ap_fixed.h>
 #include <ap_int.h>
 
-const int kNum = 256;
-const int kKernel = 5;
-const int kImSize = 224;
-const int kInImSize = 228;
-const int kOutImSize = 112;
+#define kNum            (256)
+#define kKernel         (5)
+#define kImSize         (224)
+#define kInImSize       (228)
+#define kOutImSize      (112)
 
-#define H_TILE_SIZE     (112)
-#define W_TILE_SIZE     (112)
-#define H_TILE_COUNT    (2)
-#define W_TILE_COUNT    (2)
+#ifndef kTileH
+#define kTileH          (112)
+#endif
+
+#ifndef kTileW
+#define kTileW          (112)
+#endif
 
 template <class T>
 inline T max(T a, T b) { return a > b ? a : b; }
+
+#ifdef FASTSIM
+
+// These code are soly for accelerating software emulation
+// and are not used for hardware generation.
 
 #define Input(x,y,z)    \
     (input_g[(x)*kInImSize*kInImSize+(y)*kInImSize+(z)])
@@ -31,7 +40,6 @@ inline T max(T a, T b) { return a > b ? a : b; }
 #define Output(x,y,z)   \
     (output_g[(x)*kOutImSize*kOutImSize+(y)*kOutImSize+z])
 
-#ifdef FASTSIM
 typedef float input_t;
 typedef float weight_t;
 typedef float bias_t;
@@ -64,25 +72,28 @@ inline void read_bias_from_memory(
 
 inline void read_input_from_memory(int hh, int ww,
     const input_g_t *input_g,
-    input_t          input[kNum][H_TILE_SIZE+4][W_TILE_SIZE+4]) {
+    input_t          input[kNum][kTileH+4][kTileW+4]) {
   read_input:
   for (int j = 0; j < kNum; j++)
-    for (int h = 0; h < H_TILE_SIZE + 4; h++)
-      for (int w = 0; w < W_TILE_SIZE + 4; w++)
+    for (int h = 0; h < kTileH + 4; h++)
+      for (int w = 0; w < kTileW + 4; w++)
         input[j][h][w] = Input(j, hh + h, ww + w);
 }
 
 inline void write_output_to_memory(int hh, int ww,
     output_g_t      *output_g,
-    output_t         output[kNum][H_TILE_SIZE/2][W_TILE_SIZE/2]) {
+    output_t         output[kNum][kTileH/2][kTileW/2]) {
   write_output:
   for (int i = 0; i < kNum; i++)
-    for (int h = 0; h < H_TILE_SIZE/2; h++)
-      for (int w = 0; w < W_TILE_SIZE/2; w++)
+    for (int h = 0; h < kTileH/2; h++)
+      for (int w = 0; w < kTileW/2; w++)
         Output(i, hh/2 + h, ww/2 + w) = output[i][h][w];
 }
 
 #else
+
+// These code are the actual code used for for hardware generation.
+
 typedef ap_ufixed<8,8>   input_t;
 typedef ap_fixed <8,1>   weight_t;
 typedef ap_ufixed<8,0>   bias_t;
@@ -143,19 +154,19 @@ inline void read_bias_from_memory(
 
 inline void read_input_from_memory(int hh, int ww,
     const input_g_t *input_g,
-    input_t          input[kNum][H_TILE_SIZE+4][W_TILE_SIZE+4]) {
+    input_t          input[kNum][kTileH+4][kTileW+4]) {
 
   read_input:
   for (int j = 0; j < kNum; j++)
-    for (int h = 0; h < H_TILE_SIZE + 4; h++) {
+    for (int h = 0; h < kTileH + 4; h++) {
 
       const int start_real = j*kInImSize*kInImSize+(hh+h)*kInImSize + ww;
-      const int end_real   = j*kInImSize*kInImSize+(hh+h)*kInImSize + ww+W_TILE_SIZE+4;
+      const int end_real   = j*kInImSize*kInImSize+(hh+h)*kInImSize + ww+kTileW+4;
       const int start      = start_real / item_per_read;
       const int till       = (end_real - 1) / item_per_read;
 
       for (int idx = start; idx <= till; idx++) {
-// (W_TILE_SIZE+4) / item_per_read = 116/64 = 2
+// (kTileW+4) / item_per_read <= 116/64 <= 2
 #pragma HLS loop_tripcount min=2 max=2 avg=2
 #pragma HLS pipeline
         input_g_t data = input_g[idx];
@@ -175,21 +186,21 @@ inline void read_input_from_memory(int hh, int ww,
 
 inline void write_output_to_memory(int hh, int ww,
     output_g_t      *output_g,
-    output_t         output[kNum][H_TILE_SIZE/2][W_TILE_SIZE/2]) {
+    output_t         output[kNum][kTileH/2][kTileW/2]) {
 
   hh /= 2;  ww /= 2;
 
   write_output:
   for (int i = 0; i < kNum; i++)
-    for (int h = 0; h < H_TILE_SIZE/2; h++) {
+    for (int h = 0; h < kTileH/2; h++) {
 
       const int start_real = i*kOutImSize*kOutImSize+(hh+h)*kOutImSize + ww;
-      const int end_real   = i*kOutImSize*kOutImSize+(hh+h)*kOutImSize + ww+W_TILE_SIZE/2;
+      const int end_real   = i*kOutImSize*kOutImSize+(hh+h)*kOutImSize + ww+kTileW/2;
       const int start      = start_real / item_per_read;
       const int till       = (end_real - 1) / item_per_read;
 
       for (int idx = start; idx <= till; idx++) {
-// (W_TILE_SIZE / 2) / item_per_read = 56/64 = 1
+// (kTileW / 2) / item_per_read <= 56/64 <= 1
 #pragma HLS loop_tripcount min=1 max=1 avg=1
 #pragma HLS pipeline
         output_g_t data = output_g[idx];
@@ -215,6 +226,9 @@ inline void write_output_to_memory(int hh, int ww,
 void CnnKernel_YourCode(
     const input_g_t *input_g, const weight_g_t *weight_g,
     const bias_g_t  *bias_g,        output_g_t *output_g);
+
+// This is the actual top level function, you need to specify the same
+// interface pragmas if you are writing your own.  Besides, remember "C".
 
 extern "C" void CnnKernel(
     const input_g_t *input, const weight_g_t *weight,
