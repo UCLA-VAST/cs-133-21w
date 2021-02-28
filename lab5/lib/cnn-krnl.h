@@ -107,7 +107,7 @@ typedef ap_uint<512>     output_g_t;
 
 const int item_per_read = 512 / 8;
 
-inline void read_weight_from_memory(
+void read_weight_from_memory(
     const weight_g_t *weight_g,
     weight_t          weight[kNum][kNum][kKernel][kKernel]) {
 
@@ -115,11 +115,10 @@ inline void read_weight_from_memory(
 
   read_weight:
   for (int idx = 0; idx < total_read; idx++) {
-#pragma HLS pipeline
     weight_g_t data = weight_g[idx];
 
     for (int item = 0; item < item_per_read; item++) {
-#pragma HLS unroll
+#pragma HLS pipeline
       int real_index = idx * item_per_read + item;
       int l = real_index % kKernel;  real_index /= kKernel;
       int k = real_index % kKernel;  real_index /= kKernel;
@@ -132,7 +131,7 @@ inline void read_weight_from_memory(
   }
 }
 
-inline void read_bias_from_memory(
+void read_bias_from_memory(
     const bias_g_t *bias_g,
     bias_t          bias[kNum]) {
 
@@ -140,11 +139,10 @@ inline void read_bias_from_memory(
 
   read_bias:
   for (int idx = 0; idx < total_read; idx++) {
-#pragma HLS pipeline
     bias_g_t data = bias_g[idx];
 
     for (int item = 0; item < item_per_read; item++) {
-#pragma HLS unroll
+#pragma HLS pipeline
       int real_index = idx * item_per_read + item;
       ap_uint<8> temp = (data >> (item * 8))(7, 0);
       bias[real_index] = *((bias_g_t *)&temp);
@@ -152,7 +150,7 @@ inline void read_bias_from_memory(
   }
 }
 
-inline void read_input_from_memory(int hh, int ww,
+void read_input_from_memory(int hh, int ww,
     const input_g_t *input_g,
     input_t          input[kNum][kTileH+4][kTileW+4]) {
 
@@ -168,11 +166,10 @@ inline void read_input_from_memory(int hh, int ww,
       for (int idx = start; idx <= till; idx++) {
 // (kTileW+4) / item_per_read <= 116/64 <= 2
 #pragma HLS loop_tripcount min=2 max=2 avg=2
-#pragma HLS pipeline
         input_g_t data = input_g[idx];
 
         for (int item = 0; item < item_per_read; item++) {
-#pragma HLS unroll
+#pragma HLS pipeline
           int real_index = idx * item_per_read + item;
           if (real_index < end_real && real_index >= start_real) {
             int w = real_index % kInImSize;
@@ -184,7 +181,7 @@ inline void read_input_from_memory(int hh, int ww,
     }
 }
 
-inline void write_output_to_memory(int hh, int ww,
+void write_output_to_memory(int hh, int ww,
     output_g_t      *output_g,
     output_t         output[kNum][kTileH/2][kTileW/2]) {
 
@@ -202,11 +199,10 @@ inline void write_output_to_memory(int hh, int ww,
       for (int idx = start; idx <= till; idx++) {
 // (kTileW / 2) / item_per_read <= 56/64 <= 1
 #pragma HLS loop_tripcount min=1 max=1 avg=1
-#pragma HLS pipeline
         output_g_t data = output_g[idx];
 
         for (int item = 0; item < item_per_read; item++) {
-#pragma HLS unroll
+#pragma HLS pipeline
           int real_index = idx * item_per_read + item;
           if (real_index < end_real && real_index >= start_real) {
             int w = real_index % kOutImSize;
