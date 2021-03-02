@@ -2,9 +2,9 @@ SRCS = lib/fixed-point/cnn.h lib/fixed-point/cnn.cpp \
 	   lib/fixed-point/opencl.cpp lib/fixed-point/main.cpp
 FAST = lib/cnn.h lib/cnn.cpp lib/opencl.cpp lib/main.cpp
 
-DSA := xilinx_vcu1525_xdma_201830_1
-DEVICE := xilinx_vcu1525_xdma_201830_1
-VP := xocc
+DSA := xilinx_aws-vu9p-f1-04261818_dynamic_5_0
+DEVICE := $(AWS_PLATFORM)
+VP := $(XILINX_VITIS)/bin/v++
 CLFLAGS = -t $(TARGET) --platform $(DEVICE) --save-temps
 LDFLAGS += -lOpenCL
 
