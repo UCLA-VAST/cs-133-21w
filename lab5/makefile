@@ -22,7 +22,7 @@ swsim: emconfig
 hwsim: emconfig
 	OPENCL_BINARY=cnn.hw_emu.$(DSA).xclbin XCL_EMULATION_MODE=hw_emu $(MAKE) TARGET=hw_emu internal
 
-cnn-krnl.rpt:
+cnn-krnl.rpt: cnn-krnl.cpp
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
 	cp _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt ./cnn-krnl.rpt
 
