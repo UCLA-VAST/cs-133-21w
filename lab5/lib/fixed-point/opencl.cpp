@@ -180,7 +180,7 @@ void OpenclSetup(const string& kernel_name, cl::Context* context,
               program = cl::Program(*context, sources, &err);
               CL_CHECK(err);
             }
-            err = program.build({device});
+            err = program.build(device);
             if (err != CL_SUCCESS) {
               throw runtime_error(
                   program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device));
