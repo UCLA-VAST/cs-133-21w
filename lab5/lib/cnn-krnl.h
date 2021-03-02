@@ -5,7 +5,12 @@
 #pragma GCC target ("arch=skylake")
 #pragma GCC optimize ("-O3,-ffast-math")
 
+#ifdef __SYNTHESIS__
+#define fprintf(f, fmt, ...) (0)
+#define printf(fmt, ...) (0)
+#else
 #include <cstdio>
+#endif
 #include <ap_fixed.h>
 #include <ap_int.h>
 
