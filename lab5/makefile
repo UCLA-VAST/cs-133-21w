@@ -22,13 +22,15 @@ swsim: emconfig
 hwsim: emconfig
 	OPENCL_BINARY=cnn.hw_emu.$(DSA).xclbin XCL_EMULATION_MODE=hw_emu $(MAKE) TARGET=hw_emu internal
 
-estimate:
+cnn-krnl.rpt:
 	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
-	grep -m 1 -B 1 -A 4 "Latency (absolute)" _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt
+	cp _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt ./cnn-krnl.rpt
 
-resource:
-	$(MAKE) TARGET=hw cnn.hw.$(DSA).xo
-	grep -m 1 -B 1 -A 24 "== Utilization Estimates" _x/*/CnnKernel/CnnKernel/solution/syn/report/CnnKernel_YourCode_csynth.rpt
+estimate: cnn-krnl.rpt
+	grep -m 1 -B 1 -A 4 "Latency (absolute)" ./cnn-krnl.rpt
+
+resource: cnn-krnl.rpt
+	grep -m 1 -B 1 -A 24 "== Utilization Estimates" ./cnn-krnl.rpt
 
 cnn.$(TARGET).$(DSA).xo: ./cnn-krnl.cpp
 	$(VP) $(CLFLAGS) -c -k CnnKernel -I'$(<D)' -o'$@' '$<'
