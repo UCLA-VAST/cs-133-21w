@@ -66,4 +66,4 @@ clean:
 
 #CXX = # specify your compiler here
 LDFLAGS += # specify your library linking options here
-CXXFLAGS += -std=c++17 -O3 $(LDFLAGS)
+CXXFLAGS += -std=c++11 -O3 $(LDFLAGS)
