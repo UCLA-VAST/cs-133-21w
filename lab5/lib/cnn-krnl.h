@@ -169,8 +169,15 @@ void read_input_from_memory(int hh, int ww,
       const int till       = (end_real - 1) / item_per_read;
 
       for (int idx = start; idx <= till; idx++) {
-// (kTileW+4) / item_per_read <= 116/64 <= 2
-#pragma HLS loop_tripcount min=2 max=2 avg=2
+#if kTileW <= 56
+  // (kTileW+4) / item_per_read <= 60/64 <= 1
+  #pragma HLS loop_tripcount min=1 max=1 avg=1
+#elif kTileW <= 112
+  // (kTileW+4) / item_per_read <= 116/64 <= 2
+  #pragma HLS loop_tripcount min=2 max=2 avg=2
+#else
+  #pragma HLS loop_tripcount min=3 max=3 avg=3
+#endif
         input_g_t data = input_g[idx];
 
         for (int item = 0; item < item_per_read; item++) {
@@ -202,8 +209,12 @@ void write_output_to_memory(int hh, int ww,
       const int till       = (end_real - 1) / item_per_read;
 
       for (int idx = start; idx <= till; idx++) {
-// (kTileW / 2) / item_per_read <= 56/64 <= 1
-#pragma HLS loop_tripcount min=1 max=1 avg=1
+#if kTileW <= 112
+  // (kTileW / 2) / item_per_read <= 56/64 <= 1
+  #pragma HLS loop_tripcount min=1 max=1 avg=1
+#else
+  #pragma HLS loop_tripcount min=2 max=2 avg=2
+#endif
         output_g_t data = output_g[idx];
 
         for (int item = 0; item < item_per_read; item++) {
