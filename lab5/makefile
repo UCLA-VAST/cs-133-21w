@@ -11,8 +11,6 @@ LDFLAGS += -lOpenCL
 export OPENCL_PLATFORM = Xilinx
 export OPENCL_DEVICE = $(DSA)
 
-REQUIRED_FILES = cnn.cl params.sh lab5-report.pdf
-
 fastsim: emconfig
 	OPENCL_BINARY=cnn_fast.sw_emu.$(DSA).xclbin XCL_EMULATION_MODE=sw_emu $(MAKE) TARGET=sw_emu internal-fast
 
